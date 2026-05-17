@@ -27,6 +27,6 @@ phases:
       - docker push $ECR_REPO_URI:latest
       - echo "Writing imagedefinitions.json for ECS deployment (optional)..."
       - printf '[{"name":"python-flask-api","imageUri":"%s"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json
-
+artifacts:
   files:
     - imagedefinitions.json
