@@ -28,7 +28,7 @@ def json_response(data: Any, status_code: int = 200) -> JSONResponse:
     )
 
 # ---------- MySQL (RDS) ----------
-def get_mysql_connection():
+def get_mysql_connection_old_way():
     """
     Uses env vars:
       RDS_HOST, RDS_PORT, RDS_USER, RDS_PASSWORD, RDS_DB
@@ -53,6 +53,55 @@ def get_mysql_connection():
         read_timeout=30,
         write_timeout=30,
         autocommit=True,
+    )
+
+# ---------- MySQL (RDS with IAM Auth) ----------
+def get_mysql_connection():
+    """
+    Uses IAM authentication instead of password
+
+    Required env vars:
+      RDS_HOST
+      RDS_PORT
+      RDS_USER
+      RDS_DB
+      AWS_REGION
+    """
+
+    host = os.getenv("RDS_HOST")
+    port = int(os.getenv("RDS_PORT", "3306"))
+    user = os.getenv("RDS_USER")
+    db = os.getenv("RDS_DB", "testDb")
+    region = os.getenv("AWS_REGION")
+
+    if not all([host, user, db, region]):
+        raise RuntimeError("Missing required env vars for IAM auth")
+
+    # ✅ Generate IAM token
+    client = boto3.client("rds", region_name=region)
+
+    token = client.generate_db_auth_token(
+        DBHostname=host,
+        Port=port,
+        DBUsername=user,
+        Region=region,
+    )
+
+    # ✅ Connect using token (NOT password)
+    return pymysql.connect(
+        host=host,
+        port=port,
+        user=user,
+        password=token,
+        database=db,
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=5,
+        read_timeout=30,
+        write_timeout=30,
+        autocommit=True,
+
+        # ✅ REQUIRED for IAM auth
+        ssl={"ssl": {}}
     )
 
 def fetch_all_mysql_rows() -> List[Dict[str, Any]]:
