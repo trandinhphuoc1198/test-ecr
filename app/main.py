@@ -163,7 +163,7 @@ app = FastAPI(title=APP_NAME)
 def health():
     return {"status": "ok", "app": APP_NAME}
 
-@app.get("/rds/testtable")
+@app.get("/rds")
 def get_rds_testtable():
     try:
         rows = fetch_all_mysql_rows()
@@ -171,7 +171,7 @@ def get_rds_testtable():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RDS query failed: {str(e)}")
 
-@app.get("/dynamodb/testtable")
+@app.get("/dynamodb")
 def get_ddb_testtable():
     try:
         table = get_ddb_table()
