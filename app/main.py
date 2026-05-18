@@ -3,7 +3,7 @@ import json
 import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
-
+import time
 import boto3
 import pymysql
 from fastapi import FastAPI, HTTPException
@@ -157,7 +157,32 @@ def scan_all_items(table) -> List[Dict[str, Any]]:
     return items
 
 # ---------- FastAPI ----------
+
+
+
 app = FastAPI(title=APP_NAME)
+@app.get("/compute")
+def compute_work():
+    """
+    Performs CPU-bound work (prime number calculation) for about 5 seconds.
+    """
+    def is_prime(n):
+        if n < 2:
+            return False
+        for i in range(2, int(n ** 0.5) + 1):
+            if n % i == 0:
+                return False
+        return True
+
+    start = time.time()
+    count = 0
+    num = 2
+    while time.time() - start < 5:
+        if is_prime(num):
+            count += 1
+        num += 1
+    duration = time.time() - start
+    return {"status": "done", "primes_found": count, "duration": round(duration, 2)}
 
 @app.get("/")
 def health():
